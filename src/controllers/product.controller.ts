@@ -80,7 +80,7 @@ export const getSingleProduct = TryCatch(async(req,res,next)=>{
 export const newProduct = TryCatch(async(req:Request<{},{},newProductRequestBody>,res,next)=>{
     
   const {name,price,stock,category} = req.body;
-  
+  const server = "https://gujranwalazone-backend.onrender.com"
   const photo = req.file;
   if(!photo){
       return next(new ErrorHandler("Please Add Photo",401));
@@ -100,9 +100,9 @@ const product =  await Product.create({
       price,
       category: category.toLocaleLowerCase(),
       stock,
-      photo:photo.path
+      photo:`${server}/${photo.path}`
   });
-  console.log(product);
+  console.log(product.photo);
   
   invalidateCache({ product: true, admin: true });
  return res.status(201).json({
@@ -113,6 +113,7 @@ const product =  await Product.create({
 });
 export const updateProduct = TryCatch(async(req,res,next)=>{
     const {id} = req.params;
+    const server = "https://gujranwalazone-backend.onrender.com"
     const photo = req.file;
   const product = await Product.findByIdAndUpdate(id,req.body,{
         new:true,
@@ -129,9 +130,11 @@ export const updateProduct = TryCatch(async(req,res,next)=>{
            console.log("Old Photo Deleted");
            
         })
-       product.photo = photo.path;
-    }
-    
+       product.photo = `${server}/${photo.path}`;
+       
+      }
+      
+      console.log(product.photo);
     product.save({
         validateBeforeSave:false
     })

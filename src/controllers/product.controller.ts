@@ -7,6 +7,7 @@ import { rm } from "fs";
 import { myCache } from "../app.js";
 import { invalidateCache } from "../utils/features.js";
 import { config } from "dotenv";
+import { deleteImageFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 config({
   path: "../../.env"
 })
@@ -87,20 +88,18 @@ export const newProduct = TryCatch(async(req:Request<{},{},newProductRequestBody
   }
 
   if(!name || !price ||!stock ||!category){
-      rm(photo.path, ()=>{
-         
-         
+      rm(photo.path, ()=>{  
       })
       return next(new ErrorHandler("All fields are required",401));
   }
   
-  
+  const cloudPhoto = await uploadOnCloudinary(photo.path)
 const product =  await Product.create({
       name,
       price,
       category: category.toLocaleLowerCase(),
       stock,
-      photo:`${server}/${photo.path}`
+      photo: cloudPhoto?.url
   });
   console.log(product.photo);
   
@@ -113,7 +112,6 @@ const product =  await Product.create({
 });
 export const updateProduct = TryCatch(async(req,res,next)=>{
     const {id} = req.params;
-    const server = "https://gujranwalazone-backend.onrender.com"
     const photo = req.file;
   const product = await Product.findByIdAndUpdate(id,req.body,{
         new:true,
@@ -124,17 +122,16 @@ export const updateProduct = TryCatch(async(req,res,next)=>{
     if(!product){
         return next(new ErrorHandler("Invalid Product Id",404))
     }
-
     if(photo){
-        rm(product.photo, ()=>{
-           console.log("Old Photo Deleted");
-           
-        })
-       product.photo = `${server}/${photo.path}`;
+      rm(product.photo, async()=>{
+        console.log("Old Photo Deleted");
+        await deleteImageFromCloudinary(product.photo)
+      })
+      const photoUrl = await uploadOnCloudinary(photo?.path!)
+       product.photo = photoUrl?.url!;
        
       }
       
-      console.log(product.photo);
     product.save({
         validateBeforeSave:false
     })
@@ -157,8 +154,8 @@ export const deleteProduct = TryCatch(async(req,res,next)=>{
         return next(new ErrorHandler("Invalid Product Id",404))
     }
     
-    rm(product.photo,()=>{
-            
+    rm(product.photo,async()=>{
+      await deleteImageFromCloudinary(product.photo)
     });
     await product.deleteOne();
     

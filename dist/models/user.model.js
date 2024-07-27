@@ -17,7 +17,6 @@ const schema = new mongoose.Schema({
     },
     photo: {
         type: String,
-        required: [true, "Please add Photo"],
     },
     role: {
         type: String,
@@ -27,11 +26,9 @@ const schema = new mongoose.Schema({
     gender: {
         type: String,
         enum: ["male", "female"],
-        required: [true, "Please enter Gender"],
     },
     dob: {
         type: Date,
-        required: [true, "Please enter Date of birth"],
     },
 }, {
     timestamps: true,
@@ -39,11 +36,13 @@ const schema = new mongoose.Schema({
 schema.virtual("age").get(function () {
     const today = new Date();
     const dob = this.dob;
-    let age = today.getFullYear() - dob.getFullYear();
-    if (today.getMonth() < dob.getMonth() ||
-        (today.getMonth() === dob.getMonth() && today.getDate() < dob.getDate())) {
-        age--;
+    if (dob) {
+        let age = today.getFullYear() - dob.getFullYear();
+        if (today.getMonth() < dob.getMonth() ||
+            (today.getMonth() === dob.getMonth() && today.getDate() < dob.getDate())) {
+            age--;
+        }
+        return age;
     }
-    return age;
 });
 export const User = mongoose.model("User", schema);

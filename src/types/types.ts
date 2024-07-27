@@ -7,6 +7,8 @@ export interface NewUserRequestBody{
     photo: string;
     gender: string;
     _id: string;
+    role:string;
+    googlePhoto:string;
     
 }
 export type ControllerType = (
